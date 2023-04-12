@@ -136,6 +136,10 @@
 
 			var calcJoints = [];
 			var calcBodies = [];
+			
+			var someBodies = [];
+			var someJoints = [];
+
 
 			// visual scene
 
@@ -273,6 +277,7 @@
 
 				createCalcObjects();
 				createObjects();
+				createSomeObjects();
 
 				// interaction
 
@@ -321,7 +326,7 @@
 					boxVis.receiveShadow = true;
 
 					//adds graphics to calcBoxes, line below should be commented out
-					//scene.add(boxVis);
+					scene.add(boxVis);
 					
 					// physics
 
@@ -350,6 +355,79 @@
 					joint.rotDamping = rotDamping;
                     joint.posDamping = posDamping;
                     calcJoints.push(joint);
+					
+					lastBody = boxBody;
+					lastSize.copy(size);
+					//console.log(boxVis.geometry.attributes.position.array);
+					//console.log(boxVis.position);
+				}
+				//var datPos = THREE.Vector3;
+				//calcBodies[2].mesh.position.getWorldPosition(datPos);
+				/* console.log(calcBodies[calcBodies.length-2].mesh);
+				console.log(calcBodies[calcBodies.length-1].mesh); */
+				
+			}	
+			//create objects used for calculating
+
+			function createSomeObjects() {
+                
+                //let pos = new THREE.Vector3(0.0, (calcNumObjects * calcObjectSize.y + lastObjectsSize.y) * 1.4 + 0.2, 0.0);
+				//kanske ändra här för att de ska börja från samma avstånd
+				let pos = new THREE.Vector3(0.0, (numObjects * objectsSize.y + lastObjectsSize.y) * 1.39 + 0.2, 0.0);//inte 100- numobjects
+				let pose = new PBD.Pose();
+				let lastBody = null;
+				let jointPose0 = new PBD.Pose();
+                let jointPose1 = new PBD.Pose();
+                jointPose0.q.setFromAxisAngle(new THREE.Vector3(0.0, 0.0, 1.0), 0.5 * Math.PI)
+                jointPose1.q.setFromAxisAngle(new THREE.Vector3(0.0, 0.0, 1.0), 0.5 * Math.PI)
+				let lastSize = calcObjectsSize.clone();
+
+				for (let i = 0; i < calcNumObjects; i++) {                
+
+					let size = i < calcNumObjects - 1 ? calcObjectsSize : calcLastObjectsSize;
+
+					// graphics - boxvis variable necessary, but not to add to scene
+					
+
+					//let boxVis = new THREE.Mesh(new THREE.BoxBufferGeometry(), new THREE.MeshPhongMaterial({color: 0xf78a1d}));
+					let boxVis = new THREE.Mesh(new THREE.BoxBufferGeometry(), new THREE.MeshPhongMaterial({color: 0x00FF00}));
+					
+					boxVis.scale.set(size.x, size.y, size.z);
+					boxVis.name = "box " + i;
+					boxVis.layers.enable(1);
+					boxVis.castShadow = true;
+					boxVis.receiveShadow = true;
+
+					//adds graphics to calcBoxes, line below should be commented out
+					scene.add(boxVis);
+					
+					// physics
+
+					//pose.p.set(pos.x, pos.y - i * objectsSize.y, pos.z);
+					pose.p.set(pos.x, pos.y - i * calcObjectsSize.y, pos.z);
+					let boxBody = new PBD.Body(pose, boxVis);
+					if (size == calcLastObjectsSize){
+						boxBody.setBox(size, 2.5); //density
+					}
+					else{
+						boxBody.setBox(size);
+					}
+					
+					someBodies.push(boxBody);
+										
+					let s = i % 2 == 0 ? -0.5 : 0.5;
+                    jointPose0.p.set(s * size.x, 0.5 * size.y, s * size.z);
+					jointPose1.p.set( s * lastSize.x, -0.5 * lastSize.y, s * lastSize.z);
+
+					if (!lastBody) {
+						jointPose1.copy(jointPose0);
+						jointPose1.p.add(pose.p);
+					}
+
+					let joint = new PBD.Joint(PBD.JointType.SPHERICAL, boxBody, lastBody, jointPose0, jointPose1);
+					joint.rotDamping = rotDamping;
+                    joint.posDamping = posDamping;
+                    someJoints.push(joint);
 					
 					lastBody = boxBody;
 					lastSize.copy(size);
@@ -446,9 +524,26 @@
 
 			function render() {
 				renderer.render( scene, camera );
+
+				//var T = clock.getElapsedTime();
+				//if(T>[Tid man ger animationen] ){kalla på ny funktion som lägger nya positioner för varje låda i PBD.js, typ PBD.assignPos lr nåt}
+				//else{ det som står under, dvs räkna ut alla nya positioner, PBD.simulate}
+				//PBD.simulate(calcBodies,calcJoints, timeStep, numSubsteps, gravity, bodies, joints);
 				
-				PBD.simulate(calcBodies,calcJoints, timeStep, numSubsteps, gravity, bodies, joints);
-				
+				var T = clock.getElapsedTime();
+				 if(T>20){ //kalla på ny funktion som lägger nya positioner för varje låda i PBD.js, typ PBD.assignPos lr nåt
+				// 	renderer.render( scene, camera );
+				 	PBD.AssignPos(someBodies, bodies, timeStep, numSubsteps, gravity, someJoints);
+					//PBD.simulate1(calcBodies,calcJoints, timeStep, numSubsteps, gravity, bodies, joints);
+				}
+				else{ //det som står under, dvs räkna ut alla nya positioner, PBD.simulate
+
+				 	PBD.simulate(calcBodies,calcJoints, timeStep, numSubsteps, gravity, bodies, joints);
+				 	//wrenderer.render( scene, camera );
+
+				}
+
+
 				//PBD.simulate(calcBodies,calcJoints, timeStep, numSubsteps, gravity);
 				//PBD.simulate(bodies, joints, timeStep, numSubsteps, gravity);
 				

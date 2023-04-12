@@ -26,7 +26,8 @@
 
 
 var maxRotationPerSubstep = 0.5;
-
+const AllCBodyPositions = [];
+const AllCJointPositions = [];
 // Pose  -----------------------------------------------------------
 
 class Pose { //component in rigidbody class, aside from p and q; contains methods only
@@ -427,7 +428,23 @@ class Joint {
         }
     }	
 }
+/* function simulate1(bodies, joints, timeStep, numSubsteps, gravity) {
+    let dt = timeStep / numSubsteps;
 
+    for (let i = 0; i < numSubsteps; i++) {
+        for (let j = 0; j < bodies.length; j++) 
+            bodies[j].integrate(dt, gravity);
+
+        for (let j = 0; j < joints.length; j++)
+            joints[j].solvePos(dt);
+
+        for (let j = 0; j < bodies.length; j++) 
+            bodies[j].update(dt);
+
+        for (let j = 0; j < joints.length; j++)
+            joints[j].solveVel(dt);
+    }
+} */
 // Simulate -----------------------------------------------------------
 //i think the key is to change shit here
 //function simulate(bodies, joints, timeStep, numSubsteps, gravity) {
@@ -465,56 +482,120 @@ function simulate(calcBodies, caclJoints, timeStep, numSubsteps, gravity, bodies
         for (let j = 0; j < caclJoints.length; j++)
         caclJoints[j].solveVel(dt);
     }
-    let counter = 0;
-    
-
-    for (let i = 0; i < bodies.length-1; i+=2){
-        
-        bodies[i].mesh.position.copy(calcBodies[counter].pose.p);
-        bodies[i].mesh.quaternion.copy(calcBodies[counter].pose.q);
-        //console.log(i+" första");
-        
-        let tempV = new THREE.Vector3(0.0, 0.05, 0.0);
-        tempV.addVectors(calcBodies[counter].pose.p, tempV);
-        bodies[i+1].mesh.position.copy(tempV);
-        bodies[i+1].mesh.quaternion.copy(calcBodies[counter].pose.q);
-        //console.log(i+1 +"  andra");
-
-        /*tempV = new THREE.Vector3(0.0, 0.1, 0.0);
-        tempV.addVectors(calcBodies[counter].pose.p, tempV);
-        bodies[i+2].mesh.position.copy(tempV);
-        bodies[i+2].mesh.quaternion.copy(calcBodies[counter].pose.q);
-        //console.log(i+2 +" tredje");
-
-        tempV = new THREE.Vector3(0.0, 0.15, 0.0);
-        tempV.addVectors(calcBodies[counter].pose.p, tempV);
-        bodies[i+3].mesh.position.copy(tempV);
-        bodies[i+3].mesh.quaternion.copy(calcBodies[counter].pose.q);
-        
-        tempV = new THREE.Vector3(0.0, 0.2, 0.0);
-        tempV.addVectors(calcBodies[counter].pose.p, tempV);
-        bodies[i+4].mesh.position.copy(tempV);
-        bodies[i+4].mesh.quaternion.copy(calcBodies[counter].pose.q);*/
-        counter += 1;
-        //console.log(counter);
+    // let counter = 0;
+    if(AllCBodyPositions.length == 0){
+        for (let i = 0; i < calcBodies.length; i++){
+            AllCBodyPositions.push([]);
+            AllCJointPositions.push([]);
+            }
+    }
+    for (let i = 0; i < calcBodies.length; i++){
+        AllCBodyPositions[i].push(calcBodies[i]);
+        AllCJointPositions[i].push(caclJoints[i]);
     }
     
-    //console.log(counter);
-    //let tempV = new THREE.Vector3(-0.05, 0.08, -0.02);
-    //let tempV = new THREE.Vector3(-0.05, 0.085, -0.02);
-    //let tempV = new THREE.Vector3(-0.00, 0.085, 0);
+    //console.log(calcBodies);
+
+    // for (let i = 0; i < bodies.length-1; i+=2){
+        
+    //     bodies[i].mesh.position.copy(calcBodies[counter].pose.p);
+    //     bodies[i].mesh.quaternion.copy(calcBodies[counter].pose.q);
+    //     //console.log(i+" första");
+        
+    //     let tempV = new THREE.Vector3(0.0, 0.05, 0.0);
+    //     tempV.addVectors(calcBodies[counter].pose.p, tempV);
+    //     bodies[i+1].mesh.position.copy(tempV);
+    //     bodies[i+1].mesh.quaternion.copy(calcBodies[counter].pose.q);
+    //     //console.log(i+1 +"  andra");
+
+    //     /*tempV = new THREE.Vector3(0.0, 0.1, 0.0);
+    //     tempV.addVectors(calcBodies[counter].pose.p, tempV);
+    //     bodies[i+2].mesh.position.copy(tempV);
+    //     bodies[i+2].mesh.quaternion.copy(calcBodies[counter].pose.q);
+    //     //console.log(i+2 +" tredje");
+
+    //     tempV = new THREE.Vector3(0.0, 0.15, 0.0);
+    //     tempV.addVectors(calcBodies[counter].pose.p, tempV);
+    //     bodies[i+3].mesh.position.copy(tempV);
+    //     bodies[i+3].mesh.quaternion.copy(calcBodies[counter].pose.q);
+        
+    //     tempV = new THREE.Vector3(0.0, 0.2, 0.0);
+    //     tempV.addVectors(calcBodies[counter].pose.p, tempV);
+    //     bodies[i+4].mesh.position.copy(tempV);
+    //     bodies[i+4].mesh.quaternion.copy(calcBodies[counter].pose.q);*/
+    //     counter += 1;
+    //     //console.log(counter);
+    // }
     
+    // //console.log(counter);
+    // //let tempV = new THREE.Vector3(-0.05, 0.08, -0.02);
+    // //let tempV = new THREE.Vector3(-0.05, 0.085, -0.02);
+    // //let tempV = new THREE.Vector3(-0.00, 0.085, 0);
+    
+    // let tempV = new THREE.Vector3(-0.00, 0.05, 0.045);
+    
+    // //tempV.addVectors(calcBodies[counter].pose.p, tempV);
+    // tempV.addVectors(calcBodies[counter].pose.p, tempV);
+    // bodies[bodies.length-1].mesh.position.copy(tempV);
+    // //bodies[bodies.length-1].mesh.position.copy(calcBodies[counter].pose.p);
+    // bodies[bodies.length-1].mesh.quaternion.copy(calcBodies[counter].pose.q);
+    // //this.mesh.position.copy(this.pose.p);
+    // //this.mesh.quaternion.copy(this.pose.q);
+
+
+}
+function AssignPos(calcBodies, bodies, timeStep , numSubsteps, gravity, someJoints){
+    console.log(AllCBodyPositions);
+    console.log(bodies);
+    let dt = timeStep / numSubsteps;
+
+    let counter = 0;
+    
+    for (let i = 0; i < calcBodies.length-1; i++){
+        //console.log(calcBodies[i].mesh.position);
+        calcBodies[i].mesh.position.copy(AllCBodyPositions[i][0].pose.p);
+        calcBodies[i].mesh.quaternion.copy(AllCBodyPositions[i][0].pose.q);
+        /* bodies[i].mesh.position.copy(AllCBodyPositions[counter][0].pose.p);
+        bodies[i].mesh.quaternion.copy(AllCBodyPositions[counter][0].pose.q);
+        let tempV = new THREE.Vector3(0.0, 0.05, 0.0);
+        tempV.addVectors(AllCBodyPositions[counter][0].pose.p, tempV);
+        bodies[i+1].mesh.position.copy(tempV);
+        bodies[i+1].mesh.quaternion.copy(calcBodies[counter].pose.q); */
+        counter++;
+        
+    } 
     let tempV = new THREE.Vector3(-0.00, 0.05, 0.045);
     
     //tempV.addVectors(calcBodies[counter].pose.p, tempV);
-    tempV.addVectors(calcBodies[counter].pose.p, tempV);
-    bodies[bodies.length-1].mesh.position.copy(tempV);
+    //tempV.addVectors(AllPositions[counter][0].pose.p, tempV);
+    tempV.addVectors(AllCBodyPositions[counter][0].mesh.position, tempV);
+    calcBodies[calcBodies.length-1].pose.p.copy(tempV);
     //bodies[bodies.length-1].mesh.position.copy(calcBodies[counter].pose.p);
-    bodies[bodies.length-1].mesh.quaternion.copy(calcBodies[counter].pose.q);
+    calcBodies[calcBodies.length-1].pose.q.copy(AllCBodyPositions[counter][0].pose.q);
+    //calcBodies[calcBodies.length-1].pose.q.copy(AllCBodyPositions[counter][0].mesh.quaternion);
     //this.mesh.position.copy(this.pose.p);
     //this.mesh.quaternion.copy(this.pose.q);
+    for(let i=0; i< AllCBodyPositions.length;i++){
+        AllCBodyPositions[i].shift();
+        AllCJointPositions[i].shift();
+    }
+    /* for (let j = 0; j < AllCBodyPositions.length; j++) {
+        calcBodies[j].integrate(dt, gravity);
+    }
+    for (let j = 0; j < someJoints.length; j++){
+        someJoints[j].solvePos(dt);
+    }
+    for (let j = 0; j < AllCBodyPositions.length; j++) {
+        calcBodies[j].update(dt);
+    }
+    for (let j = 0; j < someJoints.length; j++){
+        someJoints[j].solveVel(dt);
+    } */
+    
+    
 
-
+    
+ 
 }
 
 exports.Pose = Pose;
@@ -523,7 +604,8 @@ exports.JointType = JointType;
 exports.Joint = Joint;
 
 exports.simulate = simulate;
-
+//exports.simulate1 = simulate1;
+exports.AssignPos = AssignPos;
 Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
